@@ -1,0 +1,297 @@
+/* Estilos específicos para el dashboard y componentes */
+
+/* Progress Circle */
+.progress-circle {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    position: relative;
+    background: conic-gradient(#007bff var(--progress, 0deg), #e9ecef 0deg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-circle::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background: white;
+    border-radius: 50%;
+}
+
+.progress-circle span {
+    position: relative;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Cards con hover effects */
+.card-hover {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Badges personalizados */
+.badge-sla {
+    font-size: 0.75em;
+    padding: 0.35em 0.65em;
+}
+
+.badge-estado {
+    font-size: 0.8em;
+    padding: 0.4em 0.8em;
+}
+
+/* Timeline personalizado */
+.timeline-custom {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-custom::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item-custom {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item-custom::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #6c757d;
+    border: 2px solid white;
+}
+
+.timeline-item-custom.completed::before {
+    background: #28a745;
+}
+
+.timeline-item-custom.active::before {
+    background: #007bff;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Stats cards */
+.stats-card {
+    border-left: 4px solid;
+}
+
+.stats-card.primary { border-left-color: #007bff; }
+.stats-card.success { border-left-color: #28a745; }
+.stats-card.warning { border-left-color: #ffc107; }
+.stats-card.danger { border-left-color: #dc3545; }
+.stats-card.info { border-left-color: #17a2b8; }
+
+/* Table improvements */
+.table-hover tbody tr {
+    transition: background-color 0.15s ease-in-out;
+}
+
+.table-sm th, .table-sm td {
+    padding: 0.5rem;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Custom alerts */
+.alert-dismissible .btn-close {
+    padding: 0.75rem 0.75rem;
+}
+
+/* Progress bars */
+.progress-thin {
+    height: 4px;
+}
+
+.progress-thick {
+    height: 12px;
+}
+
+/* Avatar styles */
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    font-weight: 600;
+    color: white;
+}
+
+.avatar-sm {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.8rem;
+}
+
+.avatar-lg {
+    width: 3.5rem;
+    height: 3.5rem;
+    font-size: 1.2rem;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-online { background-color: #28a745; }
+.status-offline { background-color: #6c757d; }
+.status-busy { background-color: #dc3545; }
+.status-away { background-color: #ffc107; }
+
+/* Custom buttons */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .table {
+        color: #e2e8f0;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #4a5568;
+        color: #e2e8f0;
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .stats-card .d-flex {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 0.25rem;
+        border-radius: 0.25rem !important;
+    }
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Utility classes */
+.text-ellipsis {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.user-select-none {
+    user-select: none;
+}
+
+/* Chart container responsiveness */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+@media (max-width: 576px) {
+    .chart-container {
+        height: 250px;
+    }
+}
