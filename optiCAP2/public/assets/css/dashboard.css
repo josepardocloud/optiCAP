@@ -1,0 +1,263 @@
+/* Estilos específicos para dashboard */
+.stats-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    border-radius: 10px;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stats-icon {
+    font-size: 2rem;
+    opacity: 0.7;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Progress bars */
+.progress {
+    border-radius: 10px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* Activity feed */
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.feed-item {
+    padding: 15px;
+    border-left: 3px solid #4e73df;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 0 8px 8px 0;
+}
+
+.feed-item.success {
+    border-left-color: #1cc88a;
+}
+
+.feed-item.warning {
+    border-left-color: #f6c23e;
+}
+
+.feed-item.danger {
+    border-left-color: #e74a3b;
+}
+
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4e73df;
+    border: 3px solid white;
+}
+
+.timeline-item.completed::before {
+    background: #1cc88a;
+}
+
+.timeline-item.pending::before {
+    background: #f6c23e;
+}
+
+.timeline-item.skipped::before {
+    background: #6c757d;
+}
+
+/* Charts */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+/* Badges personalizados */
+.badge {
+    font-size: 0.75em;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+}
+
+.badge-estado-pendiente {
+    background-color: #f6c23e;
+    color: #000;
+}
+
+.badge-estado-en_proceso {
+    background-color: #4e73df;
+    color: #fff;
+}
+
+.badge-estado-finalizado {
+    background-color: #1cc88a;
+    color: #fff;
+}
+
+.badge-estado-completado {
+    background-color: #1cc88a;
+    color: #fff;
+}
+
+.badge-estado-cancelado {
+    background-color: #e74a3b;
+    color: #fff;
+}
+
+.badge-estado-rechazado {
+    background-color: #e74a3b;
+    color: #fff;
+}
+
+.badge-estado-no_aplica {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* Table improvements */
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,0.075);
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+/* Login page styles */
+.login-body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.login-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    color: white;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.login-logo {
+    max-width: 80px;
+    margin-bottom: 15px;
+}
+
+.login-form {
+    padding: 30px;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+}
+
+.login-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.password-input-group {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 20px;
+    }
+    
+    .login-container {
+        padding: 10px;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+}
