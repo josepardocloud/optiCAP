@@ -1,0 +1,212 @@
+/* Estilos específicos para impresión */
+@media print {
+    /* Ocultar elementos no necesarios para impresión */
+    .navbar,
+    .sidebar,
+    .btn,
+    .no-print,
+    .card-header .btn,
+    .d-print-none {
+        display: none !important;
+    }
+    
+    /* Mostrar elementos específicos para impresión */
+    .d-print-block {
+        display: block !important;
+    }
+    
+    .d-print-inline {
+        display: inline !important;
+    }
+    
+    .d-print-inline-block {
+        display: inline-block !important;
+    }
+    
+    /* Estilos generales para impresión */
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+        color: #000 !important;
+        background: #fff !important;
+    }
+    
+    .container-fluid {
+        width: 100%;
+        padding: 0;
+    }
+    
+    /* Cards para impresión */
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+    }
+    
+    .card-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        border-bottom: 2px solid #ddd;
+        padding: 10px 15px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    /* Tablas para impresión */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 10pt;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    
+    .table th {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        font-weight: bold;
+    }
+    
+    /* Badges para impresión */
+    .badge {
+        border: 1px solid #000;
+        background: #fff !important;
+        color: #000 !important;
+        padding: 3px 6px;
+        font-size: 9pt;
+    }
+    
+    /* Progress bars para impresión */
+    .progress {
+        border: 1px solid #ddd;
+        background: #fff;
+        height: 20px;
+    }
+    
+    .progress-bar {
+        background: #ddd !important;
+        color: #000;
+        text-align: center;
+        line-height: 20px;
+    }
+    
+    /* Timeline para impresión */
+    .timeline-print {
+        border-left: 2px solid #3498db;
+        padding-left: 20px;
+        margin-left: 10px;
+    }
+    
+    .timeline-item-print {
+        position: relative;
+        margin-bottom: 20px;
+        page-break-inside: avoid;
+    }
+    
+    .timeline-marker-print {
+        position: absolute;
+        left: -26px;
+        top: 10px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #3498db;
+        border: 2px solid white;
+    }
+    
+    .timeline-item-print.completed .timeline-marker-print {
+        background: #27ae60;
+    }
+    
+    .timeline-item-print.current .timeline-marker-print {
+        background: #f39c12;
+    }
+    
+    /* Encabezados */
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+        page-break-after: avoid;
+    }
+    
+    /* Enlaces */
+    a {
+        color: #000 !important;
+        text-decoration: underline;
+    }
+    
+    /* Evitar cortes de página en elementos importantes */
+    .card,
+    .timeline-item-print,
+    .table {
+        page-break-inside: avoid;
+    }
+    
+    /* Margenes para impresión */
+    @page {
+        margin: 1cm;
+    }
+    
+    /* Encabezado y pie de página para impresión */
+    .header-print {
+        text-align: center;
+        border-bottom: 2px solid #333;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .footer-print {
+        text-align: center;
+        border-top: 1px solid #ddd;
+        padding-top: 10px;
+        margin-top: 30px;
+        font-size: 9pt;
+        color: #666;
+    }
+    
+    /* Logos e imágenes */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Alertas para impresión */
+    .alert {
+        border: 1px solid #ddd;
+        background: #f8f9fa !important;
+        color: #000 !important;
+        padding: 10px;
+        margin: 10px 0;
+    }
+    
+    /* Formularios para impresión */
+    .form-control,
+    .form-select {
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #000;
+    }
+    
+    /* Botones para impresión (ocultos por defecto) */
+    .btn {
+        display: none !important;
+    }
+}
+
+/* Estilos específicos para vista previa de impresión */
+@media screen {
+    .print-preview {
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 20mm;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+}

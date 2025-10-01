@@ -1,0 +1,275 @@
+<?php
+require_once '../../config/session.php';
+require_once '../../includes/funciones.php';
+verificarSesion();
+
+if (!isset($_GET['id'])) {
+    redirectTo('requerimientos.php');
+    exit();
+}
+
+$requerimiento_id = $_GET['id'];
+$usuario_id = $_SESSION['usuario_id'];
+
+// Verificar permisos de visualización
+if (!puedeVerRequerimiento($usuario_id, $requerimiento_id)) {
+    redirectTo('requerimientos.php');
+    exit();
+}
+
+$database = new Database();
+$db = $database->getConnection();
+
+// Obtener información del requerimiento
+$query_requerimiento = "SELECT r.*, a.nombre as area_nombre, p.nombre as proceso_nombre, p.tipo as proceso_tipo, 
+                               u.nombre as usuario_solicitante
+                        FROM requerimientos r 
+                        INNER JOIN areas a ON r.area_id = a.id 
+                        INNER JOIN procesos p ON r.proceso_id = p.id 
+                        INNER JOIN usuarios u ON r.usuario_solicitante_id = u.id 
+                        WHERE r.id = ?";
+$stmt_requerimiento = $db->prepare($query_requerimiento);
+$stmt_requerimiento->execute([$requerimiento_id]);
+$requerimiento = $stmt_requerimiento->fetch(PDO::FETCH_ASSOC);
+
+if (!$requerimiento) {
+    redirectTo('requerimientos.php');
+    exit();
+}
+
+// Obtener seguimiento de actividades
+$query_seguimiento = "SELECT sa.*, a.nombre as actividad_nombre, a.orden, a.tiempo_dias, 
+                             u.nombre as usuario_nombre
+                      FROM seguimiento_actividades sa 
+                      INNER JOIN actividades a ON sa.actividad_id = a.id 
+                      LEFT JOIN usuarios u ON sa.usuario_id = u.id 
+                      WHERE sa.requerimiento_id = ? 
+                      ORDER BY a.orden";
+$stmt_seguimiento = $db->prepare($query_seguimiento);
+$stmt_seguimiento->execute([$requerimiento_id]);
+$seguimientos = $stmt_seguimiento->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener configuración del sistema
+$query_config = "SELECT nombre_sistema, logo_url FROM configuraciones_sistema ORDER BY id DESC LIMIT 1";
+$stmt_config = $db->prepare($query_config);
+$stmt_config->execute();
+$config = $stmt_config->fetch(PDO::FETCH_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imprimir Requerimiento - <?php echo $requerimiento['codigo']; ?></title>
+    <link href="/opticap/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/opticap/assets/css/print.css" rel="stylesheet" media="print">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+            .table { border: 1px solid #ddd; }
+            .badge { border: 1px solid #000; }
+        }
+        .header-print { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+        .timeline-print { border-left: 2px solid #3498db; padding-left: 20px; margin-left: 10px; }
+        .timeline-item-print { position: relative; margin-bottom: 20px; }
+        .timeline-marker-print { 
+            position: absolute; 
+            left: -26px; 
+            top: 0; 
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%; 
+            background: #3498db; 
+            border: 2px solid white; 
+        }
+        .completed .timeline-marker-print { background: #27ae60; }
+        .current .timeline-marker-print { background: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Botón de impresión -->
+        <div class="no-print text-center my-3">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print me-1"></i> Imprimir
+            </button>
+            <a href="detalle.php?id=<?php echo $requerimiento_id; ?>" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+        </div>
+
+        <!-- Encabezado del documento -->
+        <div class="header-print text-center">
+            <?php if ($config['logo_url']): ?>
+            <img src="/opticap/assets/uploads/logos/<?php echo $config['logo_url']; ?>" alt="Logo" height="60" class="mb-3">
+            <?php endif; ?>
+            <h1><?php echo $config['nombre_sistema'] ?? 'OptiCAP'; ?></h1>
+            <h3 class="text-muted">Requerimiento de Adquisición</h3>
+        </div>
+
+        <!-- Información del Requerimiento -->
+        <div class="card mb-4">
+            <div class="card-header bg-dark text-white">
+                <h4 class="card-title mb-0">Información del Requerimiento</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="40%">Código:</th>
+                                <td><strong><?php echo $requerimiento['codigo']; ?></strong></td>
+                            </tr>
+                            <tr>
+                                <th>Tipo:</th>
+                                <td>
+                                    <span class="badge bg-<?php echo $requerimiento['proceso_tipo'] == 'Bien' ? 'info' : 'success'; ?>">
+                                        <?php echo $requerimiento['proceso_tipo']; ?>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Proceso:</th>
+                                <td><?php echo $requerimiento['proceso_nombre']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>Estado:</th>
+                                <td>
+                                    <span class="badge bg-<?php 
+                                        switch($requerimiento['estado']) {
+                                            case 'pendiente': echo 'warning'; break;
+                                            case 'en_proceso': echo 'info'; break;
+                                            case 'completado': echo 'success'; break;
+                                            case 'cancelado': echo 'danger'; break;
+                                            default: echo 'secondary';
+                                        }
+                                    ?>"><?php echo ucfirst(str_replace('_', ' ', $requerimiento['estado'])); ?></span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-bordered">
+                            <tr>
+                                <th width="40%">Área Solicitante:</th>
+                                <td><?php echo $requerimiento['area_nombre']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>Usuario Solicitante:</th>
+                                <td><?php echo $requerimiento['usuario_solicitante']; ?></td>
+                            </tr>
+                            <tr>
+                                <th>Fecha de Creación:</th>
+                                <td><?php echo date('d/m/Y H:i', strtotime($requerimiento['fecha_creacion'])); ?></td>
+                            </tr>
+                            <tr>
+                                <th>Documento Generado:</th>
+                                <td><?php echo date('d/m/Y H:i'); ?></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <?php if ($requerimiento['observaciones']): ?>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h5>Observaciones:</h5>
+                        <div class="border p-3 bg-light">
+                            <?php echo nl2br(htmlspecialchars($requerimiento['observaciones'])); ?>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Línea de Tiempo -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h4 class="card-title mb-0">Línea de Tiempo del Proceso</h4>
+            </div>
+            <div class="card-body">
+                <div class="timeline-print">
+                    <?php foreach ($seguimientos as $seguimiento): 
+                        $clase = '';
+                        if ($seguimiento['estado'] == 'completado') {
+                            $clase = 'completed';
+                        } elseif ($seguimiento['estado'] == 'en_proceso') {
+                            $clase = 'current';
+                        }
+                    ?>
+                    <div class="timeline-item-print <?php echo $clase; ?>">
+                        <div class="timeline-marker-print"></div>
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title"><?php echo $seguimiento['orden']; ?>. <?php echo $seguimiento['actividad_nombre']; ?></h6>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Estado:</strong> 
+                                            <span class="badge bg-<?php 
+                                                switch($seguimiento['estado']) {
+                                                    case 'pendiente': echo 'secondary'; break;
+                                                    case 'en_proceso': echo 'warning'; break;
+                                                    case 'completado': echo 'success'; break;
+                                                    default: echo 'secondary';
+                                                }
+                                            ?>"><?php echo ucfirst($seguimiento['estado']); ?></span>
+                                        </p>
+                                        
+                                        <?php if ($seguimiento['fecha_inicio']): ?>
+                                        <p class="mb-1"><strong>Inicio:</strong> <?php echo date('d/m/Y H:i', strtotime($seguimiento['fecha_inicio'])); ?></p>
+                                        <?php endif; ?>
+                                        
+                                        <?php if ($seguimiento['fecha_fin']): ?>
+                                        <p class="mb-1"><strong>Fin:</strong> <?php echo date('d/m/Y H:i', strtotime($seguimiento['fecha_fin'])); ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <p class="mb-1"><strong>Tiempo estimado:</strong> <?php echo $seguimiento['tiempo_dias']; ?> días</p>
+                                        
+                                        <?php if ($seguimiento['usuario_nombre']): ?>
+                                        <p class="mb-1"><strong>Responsable:</strong> <?php echo $seguimiento['usuario_nombre']; ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                
+                                <?php if ($seguimiento['observaciones']): ?>
+                                <div class="mt-2">
+                                    <strong>Observaciones:</strong>
+                                    <div class="border-top pt-2 mt-2">
+                                        <?php echo nl2br(htmlspecialchars($seguimiento['observaciones'])); ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie de página -->
+        <div class="text-center mt-5 pt-5 border-top">
+            <p class="text-muted">
+                Documento generado por <?php echo $config['nombre_sistema'] ?? 'OptiCAP'; ?> - 
+                <?php echo date('d/m/Y H:i'); ?> - 
+                Página 1 de 1
+            </p>
+        </div>
+    </div>
+
+    <script src="/opticap/assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-imprimir al cargar la página
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>
