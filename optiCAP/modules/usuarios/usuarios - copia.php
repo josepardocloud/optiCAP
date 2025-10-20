@@ -1,0 +1,615 @@
+<?php
+require_once '../../config/session.php';
+require_once '../../includes/funciones.php';
+verificarSesion();
+verificarRol(['supervisor', 'administrador']);
+
+$database = new Database();
+$db = $database->getConnection();
+
+// Obtener lista de usuarios
+$query = "SELECT u.*, a.nombre as area_nombre 
+          FROM usuarios u 
+          LEFT JOIN areas a ON u.area_id = a.id 
+          ORDER BY u.nombre";
+$stmt = $db->prepare($query);
+$stmt->execute();
+$usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener mensajes de acciones desde SESIÓN
+$mensaje_accion = $_SESSION['accion_exitosa'] ?? '';
+$error_accion = $_SESSION['accion_error'] ?? '';
+
+// Limpiar mensajes de sesión después de leerlos
+unset($_SESSION['accion_exitosa']);
+unset($_SESSION['accion_error']);
+
+// Mensajes normales (para crear/editar usuarios) - mantener GET
+$mensaje = $_GET['mensaje'] ?? '';
+$error = $_GET['error'] ?? '';
+?>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - OptiCAP</title>
+    <link href="/opticap/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/opticap/assets/css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .kpi-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+        }
+        .kpi-icon {
+            font-size: 1.8rem;
+        }
+        .kpi-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        .kpi-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        /* Colores pastel para roles */
+        .badge-rol-administrador {
+            background-color: #FFD1DC !important; /* Rosa pastel */
+            color: #8B4513 !important;
+            border: 1px solid #FFB6C1;
+        }
+        
+        .badge-rol-supervisor {
+            background-color: #B5EAD7 !important; /* Verde pastel */
+            color: #2E8B57 !important;
+            border: 1px solid #98FB98;
+        }
+        
+        .badge-rol-super_usuario {
+            background-color: #C7CEEA !important; /* Azul pastel */
+            color: #4169E1 !important;
+            border: 1px solid #B0C4DE;
+        }
+        
+        .badge-rol-usuario {
+            background-color: #FFDAC1 !important; /* Naranja pastel */
+            color: #D2691E !important;
+            border: 1px solid #FFB347;
+        }
+        
+        .badge-rol-default {
+            background-color: #E6E6FA !important; /* Lavanda pastel */
+            color: #6A5ACD !important;
+            border: 1px solid #D8BFD8;
+        }
+        
+        /* Colores pastel para estados */
+        .badge-estado-activo {
+            background-color: #D4EDDA !important; /* Verde suave */
+            color: #155724 !important;
+            border: 1px solid #C3E6CB;
+        }
+        
+        .badge-estado-inactivo {
+            background-color: #F8F9FA !important; /* Gris claro */
+            color: #6C757D !important;
+            border: 1px solid #E9ECEF;
+        }
+        
+        .badge-estado-bloqueado {
+            background-color: #F8D7DA !important; /* Rojo suave */
+            color: #721C24 !important;
+            border: 1px solid #F5C6CB;
+        }
+        
+        /* Iconos con colores pastel */
+        .icon-administrador {
+            color: #FF69B4 !important;
+        }
+        
+        .icon-supervisor {
+            color: #32CD32 !important;
+        }
+        
+        .icon-super_usuario {
+            color: #6495ED !important;
+        }
+        
+        .icon-usuario {
+            color: #FFA500 !important;
+        }
+        
+        .icon-activo {
+            color: #28A745 !important;
+        }
+        
+        .icon-inactivo {
+            color: #6C757D !important;
+        }
+        
+        .icon-bloqueado {
+            color: #DC3545 !important;
+        }
+    </style>
+</head>
+<body>
+    <?php include '../../includes/header.php'; ?>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <?php include '../../includes/sidebar.php'; ?>
+            
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">
+                        <i class="fas fa-users me-2"></i>Gestión de Usuarios
+                    </h1>
+                    <?php if ($_SESSION['rol'] == 'administrador'): ?>
+                    <a href="gestionar.php" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Nuevo Usuario
+                    </a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Estadísticas Rápidas con fondo blanco -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="kpi-number text-primary"><?php echo count($usuarios); ?></div>
+                                        <div class="kpi-label">Total Usuarios</div>
+                                    </div>
+                                    <div class="text-primary">
+                                        <i class="fas fa-users kpi-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="kpi-number text-success"><?php echo count(array_filter($usuarios, fn($u) => $u['activo'])); ?></div>
+                                        <div class="kpi-label">Usuarios Activos</div>
+                                    </div>
+                                    <div class="text-success">
+                                        <i class="fas fa-user-check kpi-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="kpi-number text-warning"><?php echo count(array_filter($usuarios, fn($u) => !$u['activo'])); ?></div>
+                                        <div class="kpi-label">Usuarios Inactivos</div>
+                                    </div>
+                                    <div class="text-warning">
+                                        <i class="fas fa-user-slash kpi-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="kpi-number text-danger"><?php echo count(array_filter($usuarios, fn($u) => $u['bloqueado'])); ?></div>
+                                        <div class="kpi-label">Usuarios Bloqueados</div>
+                                    </div>
+                                    <div class="text-danger">
+                                        <i class="fas fa-lock kpi-icon"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>Lista de Usuarios del Sistema
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filtros -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <select class="form-select" id="filtroRol">
+                                    <option value="">Todos los roles</option>
+                                    <option value="administrador">Administrador</option>
+                                    <option value="supervisor">Supervisor</option>
+                                    <option value="super_usuario">Super Usuario</option>
+                                    <option value="usuario">Usuario</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filtroEstado">
+                                    <option value="">Todos los estados</option>
+                                    <option value="activo">Activos</option>
+                                    <option value="inactivo">Inactivos</option>
+                                    <option value="bloqueado">Bloqueados</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" class="form-control" id="buscarUsuario" placeholder="Buscar por nombre o email...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped" id="tablaUsuarios">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Rol</th>
+                                        <th>Área</th>
+                                        <th>Estado</th>
+                                        <th>Último Login</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($usuarios as $usuario): ?>
+                                    <tr class="usuario-fila" 
+                                        data-rol="<?php echo $usuario['rol']; ?>"
+                                        data-estado="<?php echo $usuario['bloqueado'] ? 'bloqueado' : ($usuario['activo'] ? 'activo' : 'inactivo'); ?>"
+                                        data-nombre="<?php echo strtolower($usuario['nombre']); ?>"
+                                        data-email="<?php echo strtolower($usuario['email']); ?>">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-size: 16px;">
+                                                    <?php echo strtoupper(substr($usuario['nombre'], 0, 1)); ?>
+                                                </div>
+                                                <div>
+                                                    <strong><?php echo htmlspecialchars($usuario['nombre']); ?></strong>
+                                                    <?php if ($usuario['bloqueado']): ?>
+                                                    <br><small class="text-danger"><i class="fas fa-lock me-1"></i>Cuenta bloqueada</small>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <i class="fas fa-envelope me-1 text-muted"></i>
+                                            <?php echo htmlspecialchars($usuario['email']); ?>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $rol_class = 'badge-rol-default';
+                                            $icon_class = 'icon-usuario';
+                                            switch($usuario['rol']) {
+                                                case 'administrador': 
+                                                    $rol_class = 'badge-rol-administrador';
+                                                    $icon_class = 'icon-administrador';
+                                                    break;
+                                                case 'supervisor': 
+                                                    $rol_class = 'badge-rol-supervisor';
+                                                    $icon_class = 'icon-supervisor';
+                                                    break;
+                                                case 'super_usuario': 
+                                                    $rol_class = 'badge-rol-super_usuario';
+                                                    $icon_class = 'icon-super_usuario';
+                                                    break;
+                                                case 'usuario': 
+                                                    $rol_class = 'badge-rol-usuario';
+                                                    $icon_class = 'icon-usuario';
+                                                    break;
+                                            }
+                                            ?>
+                                            <span class="badge <?php echo $rol_class; ?> fs-6">
+                                                <i class="fas fa-<?php 
+                                                    switch($usuario['rol']) {
+                                                        case 'administrador': echo 'user-shield'; break;
+                                                        case 'supervisor': echo 'user-tie'; break;
+                                                        case 'super_usuario': echo 'user-cog'; break;
+                                                        case 'usuario': echo 'user'; break;
+                                                        default: echo 'user';
+                                                    }
+                                                ?> me-1 <?php echo $icon_class; ?>"></i>
+                                                <?php echo ucfirst(str_replace('_', ' ', $usuario['rol'])); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <?php if ($usuario['area_nombre']): ?>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fas fa-building me-1"></i>
+                                                <?php echo htmlspecialchars($usuario['area_nombre']); ?>
+                                            </span>
+                                            <?php else: ?>
+                                            <span class="text-muted">N/A</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $estado_class = $usuario['activo'] ? 'badge-estado-activo' : 'badge-estado-inactivo';
+                                            $estado_icon_class = $usuario['activo'] ? 'icon-activo' : 'icon-inactivo';
+                                            ?>
+                                            <span class="badge <?php echo $estado_class; ?> fs-6">
+                                                <i class="fas fa-<?php echo $usuario['activo'] ? 'check-circle' : 'times-circle'; ?> me-1 <?php echo $estado_icon_class; ?>"></i>
+                                                <?php echo $usuario['activo'] ? 'Activo' : 'Inactivo'; ?>
+                                            </span>
+                                            <?php if ($usuario['bloqueado']): ?>
+                                            <span class="badge badge-estado-bloqueado ms-1 fs-6">
+                                                <i class="fas fa-lock me-1 icon-bloqueado"></i>Bloqueado
+                                            </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <small>
+                                                <?php if ($usuario['ultimo_login']): ?>
+                                                <i class="fas fa-sign-in-alt me-1 text-muted"></i>
+                                                <?php echo date('d/m/Y H:i', strtotime($usuario['ultimo_login'])); ?>
+                                                <?php else: ?>
+                                                <span class="text-muted">Nunca</span>
+                                                <?php endif; ?>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <?php if ($_SESSION['rol'] == 'administrador'): ?>
+                                                
+                                                <!-- Editar Usuario -->
+                                                <a href="gestionar.php?id=<?php echo $usuario['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Editar Usuario"
+                                                   data-usuario-id="<?php echo $usuario['id']; ?>"
+                                                   data-usuario-nombre="<?php echo htmlspecialchars($usuario['nombre']); ?>">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                
+                                                <!-- Gestión de Estado -->
+                                                <?php if ($usuario['bloqueado']): ?>
+                                                <a href="acciones.php?action=desbloquear&id=<?php echo $usuario['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Desbloquear Usuario" 
+                                                   onclick="return confirm('¿Está seguro de desbloquear a <?php echo addslashes($usuario['nombre']); ?>?')">
+                                                    <i class="fas fa-unlock"></i>
+                                                </a>
+                                                <?php elseif ($usuario['activo']): ?>
+                                                <a href="acciones.php?action=desactivar&id=<?php echo $usuario['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-warning" 
+                                                   title="Desactivar Usuario" 
+                                                   onclick="return confirm('¿Está seguro de desactivar a <?php echo addslashes($usuario['nombre']); ?>?')">
+                                                    <i class="fas fa-user-slash"></i>
+                                                </a>
+                                                <?php else: ?>
+                                                <a href="acciones.php?action=activar&id=<?php echo $usuario['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Activar Usuario" 
+                                                   onclick="return confirm('¿Está seguro de activar a <?php echo addslashes($usuario['nombre']); ?>?')">
+                                                    <i class="fas fa-user-check"></i>
+                                                </a>
+                                                <?php endif; ?>
+                                                
+                                                <!-- Permisos (disponible para TODOS los roles cuando es administrador) -->
+                                                <a href="permisos.php?usuario_id=<?php echo $usuario['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="Gestionar Permisos">
+                                                    <i class="fas fa-key"></i>
+                                                </a>
+                                                
+                                                <!-- Resetear Contraseña -->
+                                                <a href="acciones.php?action=reset_password&id=<?php echo $usuario['id']; ?>" 
+                                                   class="btn btn-sm btn-outline-secondary" 
+                                                   title="Resetear Contraseña" 
+                                                   onclick="return confirm('¿Está seguro de resetear la contraseña de <?php echo addslashes($usuario['nombre']); ?>?\n\nLa nueva contraseña será: password123')">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </a>
+                                                
+                                                <?php else: ?>
+                                                <!-- Vista para supervisores (solo ver) -->
+                                                <span class="badge bg-light text-dark">
+                                                    <i class="fas fa-eye me-1"></i>Solo lectura
+                                                </span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                    
+                                    <?php if (empty($usuarios)): ?>
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4">
+                                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                            <h5 class="text-muted">No hay usuarios registrados</h5>
+                                            <?php if ($_SESSION['rol'] == 'administrador'): ?>
+                                            <a href="gestionar.php" class="btn btn-primary mt-2">
+                                                <i class="fas fa-plus me-1"></i> Crear Primer Usuario
+                                            </a>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para Mensajes de Acción -->
+                <div class="modal fade" id="modalMensaje" tabindex="-1" aria-labelledby="modalMensajeLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title" id="modalMensajeLabel">
+                                    <i class="fas fa-check-circle me-2"></i>Acción Completada
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p id="mensajeContenido"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success" data-bs-dismiss="modal">Aceptar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para Errores -->
+                <div class="modal fade" id="modalError" tabindex="-1" aria-labelledby="modalErrorLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title" id="modalErrorLabel">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Error
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p id="errorContenido"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <?php include '../../includes/footer.php'; ?>
+    <script src="/opticap/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/opticap/assets/js/script.js"></script>
+    
+    <script>
+    // Mostrar modales automáticamente si hay mensajes
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Mostrar mensaje de acción exitosa desde SESIÓN
+        <?php if ($mensaje_accion): ?>
+            document.getElementById('mensajeContenido').textContent = '<?php echo addslashes($mensaje_accion); ?>';
+            var modalMensaje = new bootstrap.Modal(document.getElementById('modalMensaje'));
+            modalMensaje.show();
+        <?php endif; ?>
+        
+        // Mostrar mensaje de error desde SESIÓN
+        <?php if ($error_accion): ?>
+            document.getElementById('errorContenido').textContent = '<?php echo addslashes($error_accion); ?>';
+            var modalError = new bootstrap.Modal(document.getElementById('modalError'));
+            modalError.show();
+        <?php endif; ?>
+        
+        // Mostrar mensajes normales desde GET (para crear/editar)
+        if (urlParams.has('mensaje')) {
+            const mensaje = decodeURIComponent(urlParams.get('mensaje'));
+            document.getElementById('mensajeContenido').textContent = mensaje;
+            var modalMensaje = new bootstrap.Modal(document.getElementById('modalMensaje'));
+            modalMensaje.show();
+            
+            // Limpiar URL después de mostrar el mensaje
+            limpiarURL();
+        }
+        
+        if (urlParams.has('error')) {
+            const error = decodeURIComponent(urlParams.get('error'));
+            document.getElementById('errorContenido').textContent = error;
+            var modalError = new bootstrap.Modal(document.getElementById('modalError'));
+            modalError.show();
+            
+            // Limpiar URL después de mostrar el mensaje
+            limpiarURL();
+        }
+        
+        // Función para limpiar parámetros de la URL sin recargar
+        function limpiarURL() {
+            const url = new URL(window.location);
+            url.searchParams.delete('accion_exitosa');
+            url.searchParams.delete('accion_error');
+            url.searchParams.delete('mensaje');
+            url.searchParams.delete('error');
+            window.history.replaceState({}, '', url);
+        }
+        
+        // Filtros y búsqueda
+        const filtroRol = document.getElementById('filtroRol');
+        const filtroEstado = document.getElementById('filtroEstado');
+        const buscarUsuario = document.getElementById('buscarUsuario');
+        const filas = document.querySelectorAll('.usuario-fila');
+        
+        function filtrarUsuarios() {
+            const rolSeleccionado = filtroRol.value;
+            const estadoSeleccionado = filtroEstado.value;
+            const textoBusqueda = buscarUsuario.value.toLowerCase();
+            
+            filas.forEach(fila => {
+                const rol = fila.getAttribute('data-rol');
+                const estado = fila.getAttribute('data-estado');
+                const nombre = fila.getAttribute('data-nombre');
+                const email = fila.getAttribute('data-email');
+                
+                let mostrar = true;
+                
+                if (rolSeleccionado && rol !== rolSeleccionado) {
+                    mostrar = false;
+                }
+                
+                if (estadoSeleccionado && estado !== estadoSeleccionado) {
+                    mostrar = false;
+                }
+                
+                if (textoBusqueda && !nombre.includes(textoBusqueda) && !email.includes(textoBusqueda)) {
+                    mostrar = false;
+                }
+                
+                fila.style.display = mostrar ? '' : 'none';
+            });
+        }
+        
+        if (filtroRol) filtroRol.addEventListener('change', filtrarUsuarios);
+        if (filtroEstado) filtroEstado.addEventListener('change', filtrarUsuarios);
+        if (buscarUsuario) buscarUsuario.addEventListener('input', filtrarUsuarios);
+        
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+    
+    // Función para exportar tabla
+    function exportarUsuarios() {
+        const tabla = document.getElementById('tablaUsuarios');
+        let csv = [];
+        const filas = tabla.querySelectorAll('tr');
+        
+        for (let i = 0; i < filas.length; i++) {
+            let fila = [], cols = filas[i].querySelectorAll('td, th');
+            
+            for (let j = 0; j < cols.length - 1; j++) {
+                fila.push(cols[j].innerText.replace(/,/g, ''));
+            }
+            
+            csv.push(fila.join(','));
+        }
+        
+        const csvContent = "data:text/csv;charset=utf-8," + csv.join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "usuarios_opticap.csv");
+        document.body.appendChild(link);
+        link.click();
+    }
+    </script>
+</body>
+</html>
